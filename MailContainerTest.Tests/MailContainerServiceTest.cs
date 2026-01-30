@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MailContainerTest.Services;
 using MailContainerTest.Data;
 using MailContainerTest.Validators;
