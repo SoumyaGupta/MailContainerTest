@@ -15,31 +15,37 @@ namespace MailContainerTest.Validators
      */
     public class MailTransferValidator : IMailTransferValidator
     {
-        public MakeMailTransferResult Validate(MailContainer mailContainer, MakeMailTransferRequest request)
+        public MakeMailTransferResult Validate(MailContainer source,MailContainer destination, MakeMailTransferRequest request)
         {
             var result = new MakeMailTransferResult { Success = true };
+            if (source == null || destination == null)
+            return new MakeMailTransferResult { Success = false };
             switch (request.MailType)
             {
                 case MailType.StandardLetter:
-                    if (mailContainer == null || !mailContainer.AllowedMailType.HasFlag(AllowedMailType.StandardLetter))
+                    if (!source.AllowedMailType.HasFlag(AllowedMailType.StandardLetter) ||
+                !destination.AllowedMailType.HasFlag(AllowedMailType.StandardLetter))
+             
                     {
                         result.Success = false;
                     }
                     break;
 
                 case MailType.LargeLetter:
-                    if (mailContainer == null ||
-                        !mailContainer.AllowedMailType.HasFlag(AllowedMailType.LargeLetter) ||
-                        mailContainer.Capacity < request.NumberOfMailItems)
+                    if (!source.AllowedMailType.HasFlag(AllowedMailType.LargeLetter) ||
+                       !destination.AllowedMailType.HasFlag(AllowedMailType.LargeLetter) ||
+                        source.Capacity < request.NumberOfMailItems ||
+                        destination.Capacity < request.NumberOfMailItems)
                     {
                         result.Success = false;
                     }
                     break;
 
                 case MailType.SmallParcel:
-                    if (mailContainer == null ||
-                        !mailContainer.AllowedMailType.HasFlag(AllowedMailType.SmallParcel) ||
-                        mailContainer.Status != MailContainerStatus.Operational)
+                    if (!source.AllowedMailType.HasFlag(AllowedMailType.SmallParcel) ||
+                        !destination.AllowedMailType.HasFlag(AllowedMailType.SmallParcel) ||
+                         source.Status != MailContainerStatus.Operational ||
+                         destination.Status != MailContainerStatus.Operational)
                     {
                         result.Success = false;
                     }

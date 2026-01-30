@@ -14,16 +14,22 @@ namespace MailContainerTest.Tests
     [TestClass]
     public class MailTransferValidatorTests
     {
-        private MailTransferValidator validator;
+        private MailTransferValidator validator=new MailTransferValidator();
         [TestInitialize]
         public void Setup() => validator = new MailTransferValidator();
         [TestMethod]
         public void ValidateStandardLetterSuccess()
         {
-            var container = new MailContainer
+            var source = new MailContainer
             {
                 AllowedMailType = AllowedMailType.StandardLetter,
                 Capacity = 10,
+                Status = MailContainerStatus.Operational
+            };
+            var destination = new MailContainer
+            {
+                AllowedMailType = AllowedMailType.StandardLetter,
+                Capacity = int.MaxValue,
                 Status = MailContainerStatus.Operational
             };
 
@@ -33,19 +39,26 @@ namespace MailContainerTest.Tests
                 MailType = MailType.StandardLetter,
                 NumberOfMailItems = 5
             };
-            var result = validator.Validate(container, request);
+            var result = validator.Validate(source,destination, request);
             Assert.IsTrue(result.Success);
 
         }
         [TestMethod]
         public void Validate_LargeLetter_Fails_WhenCapacityTooLow()
         {
-            var container = new MailContainer
+            var source = new MailContainer
             {
                 AllowedMailType = AllowedMailType.LargeLetter,
                 Capacity = 2,
                 Status = MailContainerStatus.Operational
             };
+             var destination = new MailContainer
+            {
+                AllowedMailType = AllowedMailType.LargeLetter,
+                Capacity = int.MaxValue,
+                Status = MailContainerStatus.Operational
+            };
+
 
             var request = new MakeMailTransferRequest
             {
@@ -54,16 +67,22 @@ namespace MailContainerTest.Tests
                 NumberOfMailItems = 5
             };
 
-            var result = validator.Validate(container, request);
+            var result = validator.Validate(source, destination,request);
             Assert.IsFalse(result.Success);
         }
         [TestMethod]
         public void Validate_SmallParcel_Fails_WhenNotOperational()
         {
-            var container = new MailContainer
+            var source = new MailContainer
             {
                 AllowedMailType = AllowedMailType.SmallParcel,
                 Capacity = 10,
+                Status = MailContainerStatus.Operational
+            };
+            var destination = new MailContainer
+            {
+                AllowedMailType = AllowedMailType.SmallParcel,
+                Capacity = int.MaxValue,
                 Status = MailContainerStatus.Operational
             };
 
@@ -74,7 +93,7 @@ namespace MailContainerTest.Tests
                 NumberOfMailItems = 1
             };
 
-            var result = validator.Validate(container, request);
+            var result = validator.Validate(source,destination, request);
             Assert.IsFalse(result.Success);
         }
     }
