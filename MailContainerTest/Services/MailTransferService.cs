@@ -1,93 +1,46 @@
 ﻿using MailContainerTest.Data;
 using MailContainerTest.Types;
+using MailContainerTest.Validators;
 using System.Configuration;
 
 namespace MailContainerTest.Services
 {
+    /*Service only 
+       fetches container from the repository
+       validate container via container
+       update container if validation passes
+       return result
+      *Moved all configurationManager checks to MailContainerDatastore
+      *Removed redudant Switch blocks 
+     */
     public class MailTransferService : IMailTransferService
+        
+
     {
+        private IMailContainerRepository repository;
+        private IMailTransferValidator validator;
+        public MailTransferService(IMailContainerRepository _repository, IMailTransferValidator _validator)
+        {
+        repository = _repository;
+        validator = _validator;        
+        }
         public MakeMailTransferResult MakeMailTransfer(MakeMailTransferRequest request)
         {
-            var dataStoreType = ConfigurationManager.AppSettings["DataStoreType"];
+            var mailContainer = repository.GetMailContainer(request.SourceMailContainerNumber);
 
-            MailContainer mailContainer = null;
-
-            if (dataStoreType == "Backup")
-            {
-                var mailContainerDataStore = new BackupMailContainerDataStore();
-                mailContainer = mailContainerDataStore.GetMailContainer(request.SourceMailContainerNumber);
-
-            } else
-            {
-                var mailContainerDataStore = new MailContainerDataStore();
-                mailContainer = mailContainerDataStore.GetMailContainer(request.SourceMailContainerNumber);
-            }
-
-            var result = new MakeMailTransferResult();
-
-            switch (request.MailType)
-            {
-                case MailType.StandardLetter:
-                    if (mailContainer == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!mailContainer.AllowedMailType.HasFlag(AllowedMailType.StandardLetter))
-                    {
-                        result.Success = false;
-                    }
-                    break;
-
-                case MailType.LargeLetter:
-                    if (mailContainer == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!mailContainer.AllowedMailType.HasFlag(AllowedMailType.LargeLetter))
-                    {
-                        result.Success = false;
-                    }
-                    else if (mailContainer.Capacity < request.NumberOfMailItems)
-                    {
-                        result.Success = false;
-                    }
-                    break;
-
-                case MailType.SmallParcel:
-                    if (mailContainer == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!mailContainer.AllowedMailType.HasFlag(AllowedMailType.SmallParcel))
-                    {
-                        result.Success = false;
-
-                    }
-                    else if (mailContainer.Status != MailContainerStatus.Operational)
-                    {
-                        result.Success = false;
-                    }
-                    break;
-            }
-
+            var result=validator.Validate(mailContainer, request);
+            
             if (result.Success)
-            {
+                {
                 mailContainer.Capacity -= request.NumberOfMailItems;
+                repository.UpdateMailContainer(mailContainer);
+               
 
-                if (dataStoreType == "Backup")
-                {
-                    var mailContainerDataStore = new BackupMailContainerDataStore();
-                    mailContainerDataStore.UpdateMailContainer(mailContainer);
-
-                }
-                else
-                {
-                    var mailContainerDataStore = new MailContainerDataStore();
-                    mailContainerDataStore.UpdateMailContainer(mailContainer);
-                }
             }
-
             return result;
+
+
+           
         }
     }
 }
